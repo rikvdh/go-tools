@@ -1,1 +1,6 @@
-lang: go
+language: go
+sudo: false
+
+go:
+  - go1.7
+  - tip
