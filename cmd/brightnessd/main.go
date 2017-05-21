@@ -44,17 +44,22 @@ func main() {
 		panic(err)
 	}
 
-	brightnessTicker := time.NewTicker(time.Second * 60)
-	suntimeTicker := time.NewTicker(time.Minute * 60)
+	interval := time.NewTicker(time.Second * 10)
 	b.Set(brightnessCalculator(time.Now(), s))
+	lastBrightness := time.Now()
+	lastSuntimes := time.Now()
 	for {
 		select {
-		case <-brightnessTicker.C:
-			b.Set(brightnessCalculator(time.Now(), s))
-		case <-suntimeTicker.C:
-			s, err = newSunTimes(*lat, *long)
-			if err != nil {
-				panic(err)
+		case <-interval.C:
+			if time.Since(lastBrightness) > time.Minute {
+				b.Set(brightnessCalculator(time.Now(), s))
+				lastBrightness = time.Now()
+			}
+			if time.Since(lastSuntimes) > time.Hour {
+				s, err = newSunTimes(*lat, *long)
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 	}
