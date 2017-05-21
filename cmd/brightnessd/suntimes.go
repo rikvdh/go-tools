@@ -29,11 +29,13 @@ func newSunTimes(lat string, long string) (*SunTimes, error) {
 	if err != nil {
 		panic(err)
 	}
-
 	dec := json.NewDecoder(rep.Body)
 	if err := dec.Decode(&b); err != nil {
 		panic(err)
 	}
+
+	fmt.Printf("Sunrise is at: %s\n", b.Results.Sunrise.Format(time.RFC1123))
+	fmt.Printf("Sunset is at: %s\n", b.Results.Sunset.Format(time.RFC1123))
 	return &b.Results, nil
 }
 
