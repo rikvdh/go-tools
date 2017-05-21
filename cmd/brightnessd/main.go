@@ -51,15 +51,15 @@ func main() {
 	for {
 		select {
 		case <-interval.C:
-			if time.Since(lastBrightness) > time.Minute {
-				b.Set(brightnessCalculator(time.Now(), s))
-				lastBrightness = time.Now()
-			}
 			if time.Since(lastSuntimes) > time.Hour {
 				s, err = newSunTimes(*lat, *long)
 				if err != nil {
 					panic(err)
 				}
+			}
+			if time.Since(lastBrightness) > time.Minute {
+				b.Set(brightnessCalculator(time.Now(), s))
+				lastBrightness = time.Now()
 			}
 		}
 	}
