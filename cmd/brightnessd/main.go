@@ -4,6 +4,8 @@ import (
 	"flag"
 	"math"
 	"time"
+
+	"github.com/rikvdh/go-tools/lib/brightness"
 )
 
 var minBrightness *float64
@@ -35,7 +37,7 @@ func main() {
 	maxBrightness = flag.Float64("max", 90, "maximum brightness")
 	flag.Parse()
 
-	b, err := newBrightness()
+	b, err := brightness.New()
 	if err != nil {
 		panic(err)
 	}

@@ -1,4 +1,4 @@
-package main
+package brightness
 
 import (
 	"fmt"
@@ -57,7 +57,7 @@ func (b *Brightness) Set(newBrightness float64) {
 	ioutil.WriteFile(b.brightnessFile, []byte(rawStr), 0)
 }
 
-func newBrightness() (*Brightness, error) {
+func New() (*Brightness, error) {
 	b := &Brightness{}
 	if err := b.init(); err != nil {
 		return nil, err
