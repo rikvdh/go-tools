@@ -33,8 +33,8 @@ func brightnessCalculator(now time.Time, s *SunTimes) float64 {
 func main() {
 	lat := flag.String("lat", "51.697816", "Latitude for the user location")
 	long := flag.String("long", "5.303675", "Longitude for the user location")
-	minBrightness = flag.Float64("min", 10, "minimal brightness")
-	maxBrightness = flag.Float64("max", 90, "maximum brightness")
+	minBrightness = flag.Float64("min", 4, "minimal brightness")
+	maxBrightness = flag.Float64("max", 80, "maximum brightness")
 	flag.Parse()
 
 	b, err := brightness.New()
