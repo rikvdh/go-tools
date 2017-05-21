@@ -56,6 +56,7 @@ func main() {
 				if err != nil {
 					panic(err)
 				}
+				lastSuntimes = time.Now()
 			}
 			if time.Since(lastBrightness) > time.Minute {
 				b.Set(brightnessCalculator(time.Now(), s))
