@@ -27,11 +27,11 @@ func newSunTimes(lat string, long string) (*SunTimes, error) {
 	fmt.Println("Get sunrise and sunset times")
 	rep, err := http.Get("https://api.sunrise-sunset.org/json?lat=" + lat + "&lng=" + long)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	dec := json.NewDecoder(rep.Body)
 	if err := dec.Decode(&b); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	fmt.Printf("Sunrise is at: %s\n", b.Results.Sunrise.Format(time.RFC1123))
