@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"math"
 	"time"
 
@@ -17,11 +18,15 @@ func brightnessCalculator(now time.Time, s *SunTimes) float64 {
 	if (now.After(s.TwilightBegin.Time) && now.Before(s.Sunrise.Time)) || now.Equal(s.Sunrise.Time) {
 		period := s.Sunrise.Sub(s.TwilightBegin.Time).Seconds()
 		timeSince := now.Sub(s.TwilightBegin.Time).Seconds()
-		br = (*maxBrightness-*minBrightness)*math.Sin((timeSince/period)*(math.Pi/2)) + *minBrightness
+		pos := (timeSince / period) * math.Pi
+		curveVal := (math.Cos(pos+math.Pi) + 1) / 2
+		br = (*maxBrightness-*minBrightness)*curveVal + *minBrightness
 	} else if (now.After(s.Sunset.Time) && now.Before(s.TwilightEnd.Time)) || now.Equal(s.Sunset.Time) {
 		period := s.TwilightEnd.Sub(s.Sunset.Time).Seconds()
 		timeSince := now.Sub(s.Sunset.Time).Seconds()
-		br = (*maxBrightness-*minBrightness)*math.Cos((timeSince/period)*(math.Pi/2)) + *minBrightness
+		pos := (timeSince / period) * math.Pi
+		curveVal := (math.Cos(pos) + 1) / 2
+		br = (*maxBrightness-*minBrightness)*curveVal + *minBrightness
 	} else if now.After(s.Sunrise.Time) && now.Before(s.Sunset.Time) {
 		br = *maxBrightness
 	} else {
@@ -54,11 +59,13 @@ func main() {
 		select {
 		case <-interval.C:
 			if time.Since(lastSuntimes) > time.Hour {
-				s, err = newSunTimes(*lat, *long)
-				if err != nil {
-					panic(err)
+				sNew, err := newSunTimes(*lat, *long)
+				if err == nil {
+					s = sNew
+					lastSuntimes = time.Now()
+				} else {
+					fmt.Printf("problem retrieving suntimes: %v", err)
 				}
-				lastSuntimes = time.Now()
 			}
 			if time.Since(lastBrightness) > time.Minute {
 				b.Set(brightnessCalculator(time.Now(), s))
