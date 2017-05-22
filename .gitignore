@@ -1,2 +1,3 @@
 cmd/brightnessd/brightnessd
 cmd/brightness/brightness
+*.exe
