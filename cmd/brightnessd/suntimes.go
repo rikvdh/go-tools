@@ -35,6 +35,7 @@ func newSunTimes(lat string, long string) (*SunTimes, error) {
 	}
 
 	fmt.Printf("Sunrise is at: %s\n", b.Results.Sunrise.Format(time.RFC1123))
+	fmt.Printf("Noon is at: %s\n", b.Results.SolarNoon.Format(time.RFC1123))
 	fmt.Printf("Sunset is at: %s\n", b.Results.Sunset.Format(time.RFC1123))
 	return &b.Results, nil
 }

@@ -13,24 +13,15 @@ var minBrightness *float64
 var maxBrightness *float64
 
 func brightnessCalculator(now time.Time, s *SunTimes) float64 {
-	br := 5.0
-
-	if (now.After(s.TwilightBegin.Time) && now.Before(s.Sunrise.Time)) || now.Equal(s.Sunrise.Time) {
-		period := s.Sunrise.Sub(s.TwilightBegin.Time).Seconds()
-		timeSince := now.Sub(s.TwilightBegin.Time).Seconds()
-		pos := (timeSince / period) * math.Pi
+	br := *minBrightness
+	endDim := s.Sunrise.Time
+	startDim := s.Sunset.Time
+	if now.After(endDim) && now.Before(startDim) {
+		period := startDim.Sub(endDim).Seconds()
+		timeSince := now.Sub(endDim).Seconds()
+		pos := (timeSince / period) * (math.Pi * 2)
 		curveVal := (math.Cos(pos+math.Pi) + 1) / 2
 		br = (*maxBrightness-*minBrightness)*curveVal + *minBrightness
-	} else if (now.After(s.Sunset.Time) && now.Before(s.TwilightEnd.Time)) || now.Equal(s.Sunset.Time) {
-		period := s.TwilightEnd.Sub(s.Sunset.Time).Seconds()
-		timeSince := now.Sub(s.Sunset.Time).Seconds()
-		pos := (timeSince / period) * math.Pi
-		curveVal := (math.Cos(pos) + 1) / 2
-		br = (*maxBrightness-*minBrightness)*curveVal + *minBrightness
-	} else if now.After(s.Sunrise.Time) && now.Before(s.Sunset.Time) {
-		br = *maxBrightness
-	} else {
-		br = *minBrightness
 	}
 	return br
 }
@@ -51,7 +42,7 @@ func main() {
 		panic(err)
 	}
 
-	interval := time.NewTicker(time.Second * 10)
+	interval := time.NewTicker(time.Second * 5)
 	b.Set(brightnessCalculator(time.Now(), s))
 	lastBrightness := time.Now()
 	lastSuntimes := time.Now()
@@ -67,7 +58,7 @@ func main() {
 					fmt.Printf("problem retrieving suntimes: %v", err)
 				}
 			}
-			if time.Since(lastBrightness) > time.Minute {
+			if time.Since(lastBrightness) > time.Second*20 {
 				b.Set(brightnessCalculator(time.Now(), s))
 				lastBrightness = time.Now()
 			}
