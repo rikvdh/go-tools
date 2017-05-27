@@ -46,22 +46,21 @@ func main() {
 	b.Set(brightnessCalculator(time.Now(), s))
 	lastBrightness := time.Now()
 	lastSuntimes := time.Now()
-	for {
-		select {
-		case <-interval.C:
-			if time.Since(lastSuntimes) > time.Hour {
-				sNew, err := newSunTimes(*lat, *long)
-				if err == nil {
-					s = sNew
-					lastSuntimes = time.Now()
-				} else {
-					fmt.Printf("problem retrieving suntimes: %v", err)
-				}
-			}
-			if time.Since(lastBrightness) > time.Second*20 {
+	for range interval.C {
+		if time.Since(lastSuntimes) > time.Hour {
+			sNew, err := newSunTimes(*lat, *long)
+			if err == nil {
+				s = sNew
 				b.Set(brightnessCalculator(time.Now(), s))
+				lastSuntimes = time.Now()
 				lastBrightness = time.Now()
+			} else {
+				fmt.Printf("problem retrieving suntimes: %v\n", err)
 			}
+		}
+		if time.Since(lastBrightness) > time.Second*20 {
+			b.Set(brightnessCalculator(time.Now(), s))
+			lastBrightness = time.Now()
 		}
 	}
 }

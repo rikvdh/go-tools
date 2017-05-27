@@ -7,7 +7,12 @@ import (
 	"time"
 )
 
-const suntimesTest = `{"sunrise":"7:00:00 AM","sunset":"7:00:00 PM","solar_noon":"11:36:34 AM","day_length":"15:48:52","civil_twilight_begin":"3:00:00 AM","civil_twilight_end":"11:00:00 PM","nautical_twilight_begin":"2:01:49 AM","nautical_twilight_end":"9:11:19 PM","astronomical_twilight_begin":"12:25:52 AM","astronomical_twilight_end":"10:47:16 PM"}`
+const suntimesTest = `{"sunrise":"7:00:00 AM","sunset":"7:00:00 PM",
+	"solar_noon":"11:36:34 AM","day_length":"15:48:52",
+	"civil_twilight_begin":"3:00:00 AM","civil_twilight_end":"11:00:00 PM",
+	"nautical_twilight_begin":"2:01:49 AM","nautical_twilight_end":"9:11:19 PM",
+	"astronomical_twilight_begin":"12:25:52 AM",
+	"astronomical_twilight_end":"10:47:16 PM"}`
 
 func TestBrightnesSetter(t *testing.T) {
 	var max = 100.0

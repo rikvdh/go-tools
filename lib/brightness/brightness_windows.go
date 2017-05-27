@@ -19,7 +19,9 @@ type wmiBrightnessData struct {
 func (b *Brightness) init() error {
 	var dst []wmiBrightnessData
 
-	err := wmi.QueryNamespace(`SELECT CurrentBrightness,Levels,InstanceName FROM WmiMonitorBrightness`, &dst, `root\WMI`)
+	err := wmi.QueryNamespace(
+		`SELECT CurrentBrightness,Levels,InstanceName FROM WmiMonitorBrightness`,
+		&dst, `root\WMI`)
 	if err != nil {
 		return err
 	}
@@ -30,9 +32,12 @@ func (b *Brightness) init() error {
 	return nil
 }
 
+// Get returns the brightness via WMI
 func (b *Brightness) Get() float64 {
 	var dst []wmiBrightnessData
-	err := wmi.QueryNamespace(`SELECT CurrentBrightness,Levels,InstanceName FROM WmiMonitorBrightness`, &dst, `root\WMI`)
+	err := wmi.QueryNamespace(
+		`SELECT CurrentBrightness,Levels,InstanceName FROM WmiMonitorBrightness`,
+		&dst, `root\WMI`)
 	if err != nil {
 		panic(err)
 	}
@@ -42,6 +47,7 @@ func (b *Brightness) Get() float64 {
 	return (float64(dst[0].CurrentBrightness) / b.maxValue) * 100
 }
 
+// Set is not implemented on windows for now
 func (b *Brightness) Set(newBrightness float64) {
 	fmt.Printf("Setting brightness to %.2f\n", newBrightness)
 	panic(errors.New("Cant set brightness on windows (yet)"))

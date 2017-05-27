@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+// SunTimes is a structure which holds all Sunrise and Sunset related
+// times in UTC
 type SunTimes struct {
 	TwilightBegin CustomTime `json:"civil_twilight_begin"`
 	Sunrise       CustomTime `json:"sunrise"`
@@ -25,7 +27,8 @@ type sunTimeWrapper struct {
 func newSunTimes(lat string, long string) (*SunTimes, error) {
 	b := sunTimeWrapper{}
 	fmt.Println("Get sunrise and sunset times")
-	rep, err := http.Get("https://api.sunrise-sunset.org/json?lat=" + lat + "&lng=" + long)
+	rep, err := http.Get(
+		"https://api.sunrise-sunset.org/json?lat=" + lat + "&lng=" + long)
 	if err != nil {
 		return nil, err
 	}
@@ -42,10 +45,13 @@ func newSunTimes(lat string, long string) (*SunTimes, error) {
 
 const ctLayout = "3:04:05 PM"
 
+// CustomTime is used for unmarshalling the sunrise-sunset.org times
+// to time.Time
 type CustomTime struct {
 	time.Time
 }
 
+// UnmarshalJSON reads the sunrise-sunset.org times to time.Time
 func (ct *CustomTime) UnmarshalJSON(b []byte) (err error) {
 	s := strings.Trim(string(b), "\"")
 	if s == "null" {

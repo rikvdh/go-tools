@@ -16,7 +16,6 @@ func main() {
 		panic(err)
 	}
 
-
 	if *newBrightness < 0 {
 		fmt.Printf("Brightness is: %.1f\n", b.Get())
 	} else {
