@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/StackExchange/wmi"
+	"github.com/rikvdh/go-tools/lib/nircmd"
 )
 
 type wmiBrightnessData struct {
@@ -50,5 +51,5 @@ func (b *Brightness) Get() float64 {
 // Set is not implemented on windows for now
 func (b *Brightness) Set(newBrightness float64) {
 	fmt.Printf("Setting brightness to %.2f\n", newBrightness)
-	panic(errors.New("Cant set brightness on windows (yet)"))
+	nircmd.SetBrightness(uint64(newBrightness))
 }
