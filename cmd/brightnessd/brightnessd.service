@@ -1,0 +1,8 @@
+[Unit]
+Description=Brightness-contol-daemon based on sun-times
+
+[Service]
+ExecStart=/usr/local/sbin/brightnessd -min 1 -max 85
+
+[Install]
+WantedBy=multi-user.target

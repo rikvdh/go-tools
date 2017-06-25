@@ -2,15 +2,24 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"math"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/rikvdh/go-tools/lib/brightness"
 )
 
-var minBrightness *float64
-var maxBrightness *float64
+var (
+	lat           = flag.String("lat", "51.697816", "Latitude for the user location")
+	long          = flag.String("long", "5.303675", "Longitude for the user location")
+	minBrightness = flag.Float64("min", 4, "minimal brightness")
+	maxBrightness = flag.Float64("max", 80, "maximum brightness")
+)
+
+const (
+	brightnessInterval = time.Second * 20
+	sunTimesInterval   = time.Minute * 30
+)
 
 func brightnessCalculator(now time.Time, s *SunTimes) float64 {
 	br := *minBrightness
@@ -27,27 +36,25 @@ func brightnessCalculator(now time.Time, s *SunTimes) float64 {
 }
 
 func main() {
-	lat := flag.String("lat", "51.697816", "Latitude for the user location")
-	long := flag.String("long", "5.303675", "Longitude for the user location")
-	minBrightness = flag.Float64("min", 4, "minimal brightness")
-	maxBrightness = flag.Float64("max", 80, "maximum brightness")
 	flag.Parse()
 
 	b, err := brightness.New()
 	if err != nil {
 		panic(err)
 	}
+
+	lastSuntimes := time.Now()
 	s, err := newSunTimes(*lat, *long)
 	if err != nil {
-		panic(err)
+		lastSuntimes = lastSuntimes.Add(-brightnessInterval)
+		logrus.Warnf("problem retrieving suntimes: %v", err)
 	}
 
 	interval := time.NewTicker(time.Second * 5)
 	b.Set(brightnessCalculator(time.Now(), s))
 	lastBrightness := time.Now()
-	lastSuntimes := time.Now()
 	for range interval.C {
-		if time.Since(lastSuntimes) > time.Hour {
+		if time.Since(lastSuntimes) > sunTimesInterval {
 			sNew, err := newSunTimes(*lat, *long)
 			if err == nil {
 				s = sNew
@@ -55,10 +62,10 @@ func main() {
 				lastSuntimes = time.Now()
 				lastBrightness = time.Now()
 			} else {
-				fmt.Printf("problem retrieving suntimes: %v\n", err)
+				logrus.Warnf("problem retrieving suntimes: %v\n", err)
 			}
 		}
-		if time.Since(lastBrightness) > time.Second*20 {
+		if time.Since(lastBrightness) > brightnessInterval {
 			b.Set(brightnessCalculator(time.Now(), s))
 			lastBrightness = time.Now()
 		}
