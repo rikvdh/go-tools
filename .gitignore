@@ -1,3 +1,4 @@
 cmd/brightnessd/brightnessd
 cmd/brightness/brightness
+cmd/watchdog/watchdog
 *.exe
