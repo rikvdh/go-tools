@@ -2,3 +2,4 @@ cmd/brightnessd/brightnessd
 cmd/brightness/brightness
 cmd/watchdog/watchdog
 *.exe
+cmd/p1-influx/p1-influx
