@@ -1,5 +1,7 @@
 cmd/brightnessd/brightnessd
 cmd/brightness/brightness
 cmd/watchdog/watchdog
+cmd/atag-one/atag-one
+cmd/git-ver/git-ver
 *.exe
 cmd/p1-influx/p1-influx
