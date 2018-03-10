@@ -2,10 +2,10 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 	"time"
 
 	client "github.com/influxdata/influxdb/client/v2"
@@ -29,14 +29,16 @@ func disableP1Messages() error {
 }
 
 func main() {
-	ser, err := serial.OpenPort(&serial.Config{Name: os.Args[1], Baud: 115200, ReadTimeout: time.Second * 15})
+	baud := flag.Int("baud", 115200, "P1 BAUD rate")
+	flag.Parse()
+	ser, err := serial.OpenPort(&serial.Config{Name: flag.Arg(0), Baud: *baud, ReadTimeout: time.Second * 15})
 	if err != nil {
 		panic(err)
 	}
 	defer ser.Close()
 
 	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     os.Args[2],
+		Addr:     flag.Arg(1),
 		Username: influxUser,
 		Password: influxPassword,
 	})
