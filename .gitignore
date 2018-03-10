@@ -3,5 +3,9 @@ cmd/brightness/brightness
 cmd/watchdog/watchdog
 cmd/atag-one/atag-one
 cmd/git-ver/git-ver
+cmd/td/td
+cmd/td-server/td-server
+*.db
 *.exe
+*.pb.go
 cmd/p1-influx/p1-influx
