@@ -5,8 +5,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/rikvdh/go-tools/lib/brightness"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -50,7 +50,7 @@ func main() {
 		logrus.Warnf("problem retrieving suntimes: %v", err)
 	}
 
-	interval := time.NewTicker(time.Second * 5)
+	interval := time.NewTicker(time.Second * 1)
 	b.Set(brightnessCalculator(time.Now(), s))
 	lastBrightness := time.Now()
 	for range interval.C {
