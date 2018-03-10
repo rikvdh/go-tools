@@ -41,15 +41,17 @@ func todoList(client pb.TodoClient, filter *pb.TodoFilter) {
 		}
 
 		if todo.Done {
-			fmt.Printf("\u2611 % 6d. %s (%s)\n", todo.Id, todo.Title, time.Unix(int64(todo.Created), 0).Format(time.Stamp))
+			fmt.Printf("\u2611 % 6d. %s     (%s)\n", todo.Id, todo.Title, time.Unix(int64(todo.Created), 0).Format(time.Stamp))
 		} else {
-			fmt.Printf("\u2610 % 6d. %s (%s)\n", todo.Id, todo.Title, time.Unix(int64(todo.Created), 0).Format(time.Stamp))
+			fmt.Printf("\u2610 % 6d. %s     (%s)\n", todo.Id, todo.Title, time.Unix(int64(todo.Created), 0).Format(time.Stamp))
 		}
 	}
 }
 
 func main() {
 	doneID := flag.Int("done", 0, "Todo ID to mark as done")
+	undoneID := flag.Int("undone", 0, "Todo ID to mark as un-done (reset done flag)")
+	editID := flag.Int("edit", 0, "ID of Todo item to edit")
 	all := flag.Bool("all", false, "Show all (including done) items")
 	flag.Parse()
 
@@ -81,9 +83,18 @@ func main() {
 		})
 		return
 	}
+	if *undoneID > 0 {
+		addTodo(client, &pb.TodoRequest{
+			List: viper.GetString("list"),
+			Id:   int32(*undoneID),
+			Done: false,
+		})
+		return
+	}
 
 	if flag.NArg() >= 1 {
 		addTodo(client, &pb.TodoRequest{
+			Id:      int32(*editID),
 			Created: uint64(time.Now().Unix()),
 			List:    viper.GetString("list"),
 			Title:   strings.Join(flag.Args(), " "),
