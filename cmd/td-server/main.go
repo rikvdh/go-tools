@@ -18,9 +18,6 @@ import (
 const (
 	port = ":50051"
 )
-var (
-	bucketName = []byte("rikvdh")
-)
 
 // server is used to implement todo.TodoServer.
 type server struct {
@@ -34,41 +31,52 @@ func itob(v uint64) []byte {
     return b
 }
 
+func mergeItem(dest, src *pb.TodoRequest) {
+	// we never update: id, created, list
+	// skip the title when it is empty
+	if len(src.Title) > 0 {
+		dest.Title = src.Title
+	}
+	// skip the description when it is empty
+	if len(src.Description) > 0 {
+		dest.Description = src.Description
+	}
+	if src.Priority != 0 {
+		dest.Priority = src.Priority
+	}
+	dest.Done = src.Done
+}
+
 // CreateTodo creates a new Todo
 func (s *server) Add(ctx context.Context, in *pb.TodoRequest) (*pb.TodoResponse, error) {
 	reply := &pb.TodoResponse{Success: true}
 	err := s.db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists(bucketName)
-		if err == nil {
-			b := tx.Bucket(bucketName)
-			if in.Id == 0 {
-				// no ID present, add a new one
-				id, _ := b.NextSequence()
-				reply.Id = int32(id)
-				in.Id = reply.Id
-				data, err := json.Marshal(in)
-				if err != nil {
-					return err
-				}
-
-				return b.Put(itob(id), data)
-			} else {
-				td := &pb.TodoRequest{}
-				id := itob(uint64(in.Id))
-				if err := json.Unmarshal(b.Get(id), td); err != nil {
-					return err
-				}
-				if in.Done {
-					td.Done = in.Done
-				}
-				data, err := json.Marshal(td)
-				if err != nil {
-					return err
-				}
-				return b.Put(id, data)
-			}
+		_, err := tx.CreateBucketIfNotExists([]byte(in.List))
+		if err != nil {
+			return err
 		}
-		return err
+		b := tx.Bucket([]byte(in.List))
+
+		var item *pb.TodoRequest
+
+		if in.Id > 0 {
+			item = &pb.TodoRequest{}
+			if err := json.Unmarshal(b.Get(itob(uint64(in.Id))), item); err != nil {
+				return err
+			}
+			mergeItem(item, in)
+		} else {
+			// no ID present, add a new one
+			item = in
+			id, _ := b.NextSequence()
+			item.Id = int32(id)
+		}
+
+		data, err := json.Marshal(item)
+		if err != nil {
+			return err
+		}
+		return b.Put(itob(uint64(item.Id)), data)
 	})
 	if err != nil {
 		return nil, err
@@ -79,7 +87,7 @@ func (s *server) Add(ctx context.Context, in *pb.TodoRequest) (*pb.TodoResponse,
 // GetTodos returns all todos by given filter
 func (s *server) List(filter *pb.TodoFilter, stream pb.Todo_ListServer) error {
 	return s.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(bucketName)
+		b := tx.Bucket([]byte(filter.List))
 		if b == nil {
 			fmt.Println("bucket is nil")
 			return nil
@@ -91,21 +99,15 @@ func (s *server) List(filter *pb.TodoFilter, stream pb.Todo_ListServer) error {
 			if err := json.Unmarshal(v, td); err != nil {
 				return err
 			}
-			if err := stream.Send(td); err != nil {
-				return err
+			if !td.Done || filter.All {
+				if err := stream.Send(td); err != nil {
+					return err
+				}
 			}
 		}
 
 		return nil
 	})
-/*	for _, todo := range s.savedTodos {
-			if !strings.Contains(todo.Title, filter.Text) {
-				continue
-			}
-		if filter.Text != "" {
-		}
-	}
-	return nil*/
 }
 
 func main() {
