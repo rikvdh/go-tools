@@ -18,10 +18,66 @@ import (
 )
 
 // addTodo calls the RPC method CreateTodo of TodoServer
-func addTodo(client pb.TodoClient, todo *pb.TodoRequest) {
-	_, err := client.Add(context.Background(), todo)
+func addTodo(client pb.TodoClient, todo *pb.TodoRequest) error {
+	ret, err := client.Add(context.Background(), todo)
 	if err != nil {
-		log.Fatalf("Could not create todo-item: %v", err)
+		return err
+	}
+	if !ret.Success {
+		return fmt.Errorf("unknown error occurred")
+	}
+	return nil
+}
+
+func markDone(client pb.TodoClient, id int) {
+	err := addTodo(client, &pb.TodoRequest{
+		Created: uint64(time.Now().Unix()),
+		List:    viper.GetString("list"),
+		Id:      int32(id),
+		Done:    true,
+	})
+	if err != nil {
+		logrus.Errorf("Problem marking item as done: %v", err)
+		return
+	}
+	logrus.Infof("Item %d marked as done", id)
+}
+
+func markUndone(client pb.TodoClient, id int) {
+	err := addTodo(client, &pb.TodoRequest{
+		Created: uint64(time.Now().Unix()),
+		List:    viper.GetString("list"),
+		Id:      int32(id),
+		Done:    false,
+	})
+	if err != nil {
+		logrus.Errorf("Problem marking item as undone: %v", err)
+		return
+	}
+	logrus.Infof("Item %d marked as undone", id)
+}
+
+func addOrEditItem(client pb.TodoClient, todo []string, editID int) {
+	err := addTodo(client, &pb.TodoRequest{
+		Id:      int32(editID),
+		Created: uint64(time.Now().Unix()),
+		List:    viper.GetString("list"),
+		Title:   strings.Join(todo, " "),
+		Done:    false,
+	})
+
+	if err != nil {
+		if editID > 0 {
+			logrus.Errorf("Problem editing item with id %d: %v", editID, err)
+		} else {
+			logrus.Errorf("Problem adding item: %v", editID, err)
+		}
+		return
+	}
+	if editID > 0 {
+		logrus.Infof("Successfully edited item with ID: %d", editID)
+	} else {
+		logrus.Infof("Successfully added item")
 	}
 }
 
@@ -76,36 +132,15 @@ func main() {
 	client := pb.NewTodoClient(conn)
 
 	if *doneID > 0 {
-		addTodo(client, &pb.TodoRequest{
+		markDone(client, *doneID)
+	} else if *undoneID > 0 {
+		markUndone(client, *undoneID)
+	} else if flag.NArg() >= 1 {
+		addOrEditItem(client, flag.Args(), *editID)
+	} else {
+		todoList(client, &pb.TodoFilter{
 			List: viper.GetString("list"),
-			Id:   int32(*doneID),
-			Done: true,
+			All:  *all,
 		})
-		return
 	}
-	if *undoneID > 0 {
-		addTodo(client, &pb.TodoRequest{
-			List: viper.GetString("list"),
-			Id:   int32(*undoneID),
-			Done: false,
-		})
-		return
-	}
-
-	if flag.NArg() >= 1 {
-		addTodo(client, &pb.TodoRequest{
-			Id:      int32(*editID),
-			Created: uint64(time.Now().Unix()),
-			List:    viper.GetString("list"),
-			Title:   strings.Join(flag.Args(), " "),
-			Done:    false,
-		})
-		return
-	}
-
-	todoList(client, &pb.TodoFilter{
-		Text: "",
-		List: viper.GetString("list"),
-		All:  *all,
-	})
 }
