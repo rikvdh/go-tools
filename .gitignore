@@ -7,5 +7,4 @@ cmd/td/td
 cmd/td-server/td-server
 *.db
 *.exe
-*.pb.go
 cmd/p1-influx/p1-influx
