@@ -1,11 +1,15 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"io"
 	"log"
-	"fmt"
-	"flag"
 	"strings"
+	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -13,27 +17,19 @@ import (
 	pb "github.com/rikvdh/go-tools/lib/todo"
 )
 
-const (
-	address = "localhost:50051"
-)
-
 // addTodo calls the RPC method CreateTodo of TodoServer
 func addTodo(client pb.TodoClient, todo *pb.TodoRequest) {
-	resp, err := client.Add(context.Background(), todo)
+	_, err := client.Add(context.Background(), todo)
 	if err != nil {
-		log.Fatalf("Could not create Todo: %v", err)
-	}
-	if resp.Success {
-		log.Printf("A new Todo has been added with id: %d", resp.Id)
+		log.Fatalf("Could not create todo-item: %v", err)
 	}
 }
 
-// getTodos calls the RPC method GetTodos of TodoServer
-func getTodos(client pb.TodoClient, filter *pb.TodoFilter) {
-	// calling the streaming API
+// todoList retrieves and print a list of todo's
+func todoList(client pb.TodoClient, filter *pb.TodoFilter) {
 	stream, err := client.List(context.Background(), filter)
 	if err != nil {
-		log.Fatalf("Error on get todos: %v", err)
+		logrus.Fatalf("Error: %v", err.Error())
 	}
 	for {
 		todo, err := stream.Recv()
@@ -45,28 +41,42 @@ func getTodos(client pb.TodoClient, filter *pb.TodoFilter) {
 		}
 
 		if todo.Done {
-			fmt.Printf("\u2611 % 6d. %s\n", todo.Id, todo.Title)
+			fmt.Printf("\u2611 % 6d. %s (%s)\n", todo.Id, todo.Title, time.Unix(int64(todo.Created), 0).Format(time.Stamp))
 		} else {
-			fmt.Printf("\u2610 % 6d. %s\n", todo.Id, todo.Title)
+			fmt.Printf("\u2610 % 6d. %s (%s)\n", todo.Id, todo.Title, time.Unix(int64(todo.Created), 0).Format(time.Stamp))
 		}
 	}
 }
+
 func main() {
-	doneId := flag.Int("done", 0, "Add todo-id to mark as done")
+	doneID := flag.Int("done", 0, "Todo ID to mark as done")
+	all := flag.Bool("all", false, "Show all (including done) items")
 	flag.Parse()
 
+	viper.SetEnvPrefix("td")
+	viper.SetConfigName(".td")
+	viper.AddConfigPath("$HOME")
+	viper.SetDefault("uri", "localhost:50051")
+	viper.SetDefault("list", "default")
+	viper.AutomaticEnv()
+	err := viper.ReadInConfig()
+	if _, ok := err.(viper.ConfigParseError); ok {
+		logrus.Fatalf("Error reading configuration: %v", err)
+	}
+
 	// Set up a connection to the gRPC server.
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	conn, err := grpc.Dial(viper.GetString("uri"), grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		logrus.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
 
 	client := pb.NewTodoClient(conn)
 
-	if *doneId > 0 {
+	if *doneID > 0 {
 		addTodo(client, &pb.TodoRequest{
-			Id: int32(*doneId),
+			List: viper.GetString("list"),
+			Id:   int32(*doneID),
 			Done: true,
 		})
 		return
@@ -74,13 +84,17 @@ func main() {
 
 	if flag.NArg() >= 1 {
 		addTodo(client, &pb.TodoRequest{
-			Title: strings.Join(flag.Args(), " "),
-			Done: false,
+			Created: uint64(time.Now().Unix()),
+			List:    viper.GetString("list"),
+			Title:   strings.Join(flag.Args(), " "),
+			Done:    false,
 		})
 		return
 	}
 
-	// Filter with an empty Keyword
-	filter := &pb.TodoFilter{Text: ""}
-	getTodos(client, filter)
+	todoList(client, &pb.TodoFilter{
+		Text: "",
+		List: viper.GetString("list"),
+		All:  *all,
+	})
 }

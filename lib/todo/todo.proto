@@ -8,6 +8,8 @@ service Todo {
 
 message TodoRequest {
 	int32 id = 1;
+	uint64 created = 7;
+	string list = 6;
 	string title = 2;
 	string description = 3;
 	int32 priority = 4;
@@ -21,4 +23,6 @@ message TodoResponse {
 
 message TodoFilter {
 	string text = 1;
+	bool all = 2;
+	string list = 3;
 }
